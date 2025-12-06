@@ -8,6 +8,9 @@ type IPNResponseCode string
 
 const (
 	IPNCodeTransactionSuccess       IPNResponseCode = "00"
+	IPNCodeOrderNotFound            IPNResponseCode = "01"
+	IPNCodeOrderAlreadyConfirmed    IPNResponseCode = "02"
+	IPNCodeInvalidAmount            IPNResponseCode = "04"
 	IPNCodeSuspectedFraud           IPNResponseCode = "07"
 	IPNCodeUnregisteredInternetBank IPNResponseCode = "09"
 	IPNCodeInvalidCardInfo          IPNResponseCode = "10"
@@ -19,6 +22,7 @@ const (
 	IPNCodeExceededTransactionLimit IPNResponseCode = "65"
 	IPNCodeBankMaintenance          IPNResponseCode = "75"
 	IPNCodeExceededPasswordAttempts IPNResponseCode = "79"
+	IPNCodeInvalidSignature         IPNResponseCode = "97"
 	IPNCodeOtherErrors              IPNResponseCode = "99"
 )
 
@@ -32,6 +36,12 @@ func (code IPNResponseCode) Message() string {
 	switch code {
 	case IPNCodeTransactionSuccess:
 		return "Transaction successful."
+	case IPNCodeOrderNotFound:
+		return "Transaction failed: Order not found."
+	case IPNCodeOrderAlreadyConfirmed:
+		return "Transaction failed: Order already confirmed."
+	case IPNCodeInvalidAmount:
+		return "Transaction failed: Invalid amount."
 	case IPNCodeSuspectedFraud:
 		return "Transaction successful but suspected of fraud or unusual activity."
 	case IPNCodeUnregisteredInternetBank:
@@ -54,6 +64,8 @@ func (code IPNResponseCode) Message() string {
 		return "Transaction failed: The bank's payment system is under maintenance."
 	case IPNCodeExceededPasswordAttempts:
 		return "Transaction failed: Too many incorrect payment password attempts. Please try again."
+	case IPNCodeInvalidSignature:
+		return "Transaction failed: Invalid signature."
 	case IPNCodeOtherErrors:
 		return "Transaction failed: Other errors (not listed in the predefined codes)."
 	default:
@@ -63,6 +75,18 @@ func (code IPNResponseCode) Message() string {
 
 func (code IPNResponseCode) IsIPNTransactionSuccess() bool {
 	return code == IPNCodeTransactionSuccess
+}
+
+func (code IPNResponseCode) IsIPNOrderNotFound() bool {
+	return code == IPNCodeOrderNotFound
+}
+
+func (code IPNResponseCode) IsIPNOrderAlreadyConfirmed() bool {
+	return code == IPNCodeOrderAlreadyConfirmed
+}
+
+func (code IPNResponseCode) IsIPNInvalidAmount() bool {
+	return code == IPNCodeInvalidAmount
 }
 
 func (code IPNResponseCode) IsIPNSuspectedFraud() bool {
@@ -107,6 +131,10 @@ func (code IPNResponseCode) IsIPNBankMaintenance() bool {
 
 func (code IPNResponseCode) IsIPNExceededPasswordAttempts() bool {
 	return code == IPNCodeExceededPasswordAttempts
+}
+
+func (code IPNResponseCode) IsIPNInvalidSignature() bool {
+	return code == IPNCodeInvalidSignature
 }
 
 func (code IPNResponseCode) IsIPNOtherErrors() bool {
