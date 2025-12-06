@@ -41,3 +41,8 @@ func ComputeSecureHash(data string, hashAlgo HashAlgo, hashSecret string) string
 
 	return hex.EncodeToString(h.Sum(nil))
 }
+
+func VerifySecureHash(data string, hashAlgo HashAlgo, hashSecret, expectedHash string) bool {
+	computedHash := ComputeSecureHash(data, hashAlgo, hashSecret)
+	return hmac.Equal([]byte(computedHash), []byte(expectedHash))
+}

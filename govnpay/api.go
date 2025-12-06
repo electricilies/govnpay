@@ -48,6 +48,34 @@ func GetPaymentURL(r *govnpaymodels.GetPaymentURLRequest) (string, error) {
 	return r.GetInitPaymentURL() + "?" + encodedParams, nil
 }
 
+func VerifyIPN(r *govnpaymodels.VerifyIPNRequest) (bool, error) {
+	if r == nil {
+		return false, fmt.Errorf("request cannot be nil")
+	}
+
+	params := buildVerifyIPNParams(r)
+	encodedParams := params.Encode()
+
+	ok := helper.VerifySecureHash(encodedParams, r.HashAlgo, r.HashSecret, r.SecureHash)
+	return ok, nil
+}
+
+func buildVerifyIPNParams(r *govnpaymodels.VerifyIPNRequest) url.Values {
+	params := url.Values{}
+	params.Add("vnp_Amount", r.Amount)
+	params.Add("vnp_BankCode", r.BankCode)
+	params.Add("vnp_BankTranNo", r.BankTranNo)
+	params.Add("vnp_CardType", r.CardType)
+	params.Add("vnp_OrderInfo", r.OrderInfo)
+	params.Add("vnp_PayDate", r.PayDate)
+	params.Add("vnp_ResponseCode", r.ResponseCode)
+	params.Add("vnp_TmnCode", r.TmnCode)
+	params.Add("vnp_TransactionNo", r.TransactionNo)
+	params.Add("vnp_TransactionStatus", r.TransactionStatus)
+	params.Add("vnp_TxnRef", r.TxnRef)
+	return params
+}
+
 func setPaymentURLDefaults(r *govnpaymodels.GetPaymentURLRequest) {
 	if r.GetLocale() == "" {
 		r.Locale = DefaultLocale
