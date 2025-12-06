@@ -1,6 +1,10 @@
 package govnpaymodels
 
-import "time"
+import (
+	"time"
+
+	"github.com/electricilies/govnpay/helper"
+)
 
 type QueryTransactionRequest struct {
 	RequestId       string
@@ -10,7 +14,7 @@ type QueryTransactionRequest struct {
 	TransactionDate time.Time
 	CreateDate      time.Time
 	HashSecret      string
-	HashAlgo        string
+	HashAlgo        helper.HashAlgo
 	TmnCode         string
 	Version         string
 	QueryTransURL   string
@@ -65,7 +69,7 @@ func (req *QueryTransactionRequest) GetHashSecret() string {
 	return ""
 }
 
-func (req *QueryTransactionRequest) GetHashAlgo() string {
+func (req *QueryTransactionRequest) GetHashAlgo() helper.HashAlgo {
 	if req != nil {
 		return req.HashAlgo
 	}

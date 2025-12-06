@@ -1,6 +1,10 @@
 package govnpaymodels
 
-import "time"
+import (
+	"time"
+
+	"github.com/electricilies/govnpay/helper"
+)
 
 type GetPaymentURLRequest struct {
 	Version        string
@@ -16,7 +20,7 @@ type GetPaymentURLRequest struct {
 	Locale         string
 	IpAddr         string
 	HashSecret     string
-	HashAlgo       string
+	HashAlgo       helper.HashAlgo
 	InitPaymentURL string
 }
 
@@ -117,7 +121,7 @@ func (req *GetPaymentURLRequest) GetHashSecret() string {
 	return ""
 }
 
-func (req *GetPaymentURLRequest) GetHashAlgo() string {
+func (req *GetPaymentURLRequest) GetHashAlgo() helper.HashAlgo {
 	if req != nil {
 		return req.HashAlgo
 	}

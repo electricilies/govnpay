@@ -1,19 +1,35 @@
 package helper
 
 import (
+	"crypto/hmac"
+	"crypto/md5"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"hash"
 )
 
+type HashAlgo string
+
 const (
-	Sha256     = "SHA256"
-	HmacSha512 = "HMAC-SHA512"
-	MD5        = "MD5"
+	Sha256     HashAlgo = "SHA256"
+	HmacSha512 HashAlgo = "HMAC-SHA512"
+	MD5        HashAlgo = "MD5"
 )
 
-func ComputeSecureHash(data string, hashAlgo string, hashSecret string) string {
+func ComputeSecureHash(data string, hashAlgo HashAlgo, hashSecret string) string {
 	var h hash.Hash
-	h.Reset()
+
+	switch hashAlgo {
+	case Sha256:
+		h = sha256.New()
+	case HmacSha512:
+		h = hmac.New(sha512.New, []byte(hashSecret))
+	case MD5:
+		h = md5.New()
+	default:
+		return ""
+	}
 
 	if hashAlgo == HmacSha512 {
 		h.Write([]byte(data))

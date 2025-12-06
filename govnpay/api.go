@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/lamphusy/go-vnpay/helper"
-	"github.com/lamphusy/go-vnpay/model"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/electricilies/govnpay/helper"
+	"github.com/electricilies/govnpay/model"
+	"github.com/google/uuid"
 )
 
 func GetPaymentURL(r *govnpaymodels.GetPaymentURLRequest) (string, error) {
@@ -142,7 +144,7 @@ func QueryTransaction(ctx context.Context, r *govnpaymodels.QueryTransactionRequ
 
 	resp := &govnpaymodels.VnPayQueryResponse{}
 	if err = json.Unmarshal(buf, resp); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal query transaction response error " + err.Error())
+		return nil, fmt.Errorf("cannot unmarshal query transaction response error %w", err)
 	}
 
 	secureHash := computeResponseHash(resp, r.GetHashAlgo(), r.GetHashSecret())
@@ -157,7 +159,7 @@ func QueryTransaction(ctx context.Context, r *govnpaymodels.QueryTransactionRequ
 
 func fillQueryTransactionDefaults(r *govnpaymodels.QueryTransactionRequest) {
 	if r.GetRequestId() == "" {
-		r.RequestId = strings.Replace(uuid.NewString(), "-", "", -1)
+		r.RequestId = strings.ReplaceAll(uuid.NewString(), "-", "")
 	}
 	if r.GetOrderInfo() == "" {
 		r.OrderInfo = fmt.Sprintf("%s: %s", DefaultMessageQueryTrans, r.GetRequestId())
@@ -190,7 +192,7 @@ func validateQueryTransaction(r *govnpaymodels.QueryTransactionRequest) error {
 
 	for field, value := range requiredDates {
 		if value.IsZero() {
-			return fmt.Errorf(field + " is required")
+			return errors.New(field + " is required")
 		}
 	}
 
@@ -205,17 +207,17 @@ func validateQueryTransaction(r *govnpaymodels.QueryTransactionRequest) error {
 func buildVNPayQueryRequest(r *govnpaymodels.QueryTransactionRequest) (*govnpaymodels.VnPayQueryRequest, error) {
 	loc, err := time.LoadLocation(DefaultTimeZone)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load time location: " + err.Error())
+		return nil, fmt.Errorf("cannot load time location: %w", err)
 	}
 
 	transDate, err := strconv.ParseInt(r.GetTransactionDate().In(loc).Format(DefaultTimeFormat), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse transaction date: " + err.Error())
+		return nil, fmt.Errorf("cannot parse transaction date: %w", err)
 	}
 
 	createDate, err := strconv.ParseInt(r.GetCreateDate().In(loc).Format(DefaultTimeFormat), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse create date: " + err.Error())
+		return nil, fmt.Errorf("cannot parse create date: %w", err)
 	}
 
 	resp := &govnpaymodels.VnPayQueryRequest{
@@ -253,7 +255,11 @@ func sendHTTPRequest(ctx context.Context, url string, reqToVNPay interface{}) ([
 	if err != nil {
 		return nil, fmt.Errorf("send request error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -262,7 +268,7 @@ func sendHTTPRequest(ctx context.Context, url string, reqToVNPay interface{}) ([
 	return io.ReadAll(resp.Body)
 }
 
-func computeRequestHash(r *govnpaymodels.VnPayQueryRequest, hashAlgo string, hashSecret string) string {
+func computeRequestHash(r *govnpaymodels.VnPayQueryRequest, hashAlgo helper.HashAlgo, hashSecret string) string {
 	hashData := r.GetRequestId() + "|" +
 		r.GetVersion() + "|" +
 		DefaultCommandQueryTransaction + "|" +
@@ -276,7 +282,7 @@ func computeRequestHash(r *govnpaymodels.VnPayQueryRequest, hashAlgo string, has
 	return helper.ComputeSecureHash(hashData, hashAlgo, hashSecret)
 }
 
-func computeResponseHash(data *govnpaymodels.VnPayQueryResponse, hashAlgo string, hashSecret string) string {
+func computeResponseHash(data *govnpaymodels.VnPayQueryResponse, hashAlgo helper.HashAlgo, hashSecret string) string {
 	hashData := data.GetResponseId() + "|" +
 		data.GetCommand() + "|" +
 		data.GetResponseCode() + "|" +

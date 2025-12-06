@@ -1,5 +1,5 @@
-module github.com/lamphusy/go-vnpay
+module github.com/electricilies/govnpay
 
-go 1.23.3
+go 1.25.3
 
 require github.com/google/uuid v1.6.0
